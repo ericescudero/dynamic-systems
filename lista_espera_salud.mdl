@@ -1,0 +1,209 @@
+{UTF-8}
+Lista_de_Espera= INTEG (Ingreso_Lista-Egreso_Atencion-Egresos_Administrativos,
+		2100000)
+	~	pacientes
+	~	NIVEL. Cantidad de pacientes enumerados en la lista de espera del sector pÃ¯Â¿Â½blico, \
+		desde el mÃ¯Â¿Â½s antiguo al mÃ¯Â¿Â½s reciente. Fuente: DEIS/MINSAL Lista Espera No \
+		GES 2023. https://deis.minsal.cl/estadisticas-de-salud/	|
+
+Ingreso_Lista=Demanda_Sector_Publico
+	~	pacientes/Dia
+	~	FLUJO DE ENTRADA. Pacientes que ingresan a la lista de espera por dÃ¯Â¿Â½a, \
+		equivalente a la demanda del sector pÃ¯Â¿Â½blico. Variable endÃ¯Â¿Â½gena.	|
+
+Egreso_Atencion=Pacientes_Atendidos_x_Dia
+	~	pacientes/Dia
+	~	FLUJO DE SALIDA. Pacientes que salen de la lista por ser atendidos por un \
+		especialista en el sector pÃ¯Â¿Â½blico. Variable endÃ¯Â¿Â½gena.	|
+
+Egresos_Administrativos=Lista_de_Espera*Tasa_Egresos_Administrativos
+	~	pacientes/Dia
+	~	FLUJO DE SALIDA. Pacientes que salen de la lista por razones administrativas \
+		(desistimiento, duplicados, fallecidos, cambio de previsÃ¯Â¿Â½n). Proporcional al \
+		tamaÃ¯Â¿Â½o de la lista. Variable endÃ¯Â¿Â½gena. Fuente: DEIS/MINSAL \
+		(estimado ~3.65% anual).	|
+
+Tiempo_de_Espera=Lista_de_Espera/MAX(Egreso_Atencion+Egresos_Administrativos,1)
+	~	Dia
+	~	AUXILIAR. Tiempo promedio que un paciente permanece en la lista de espera. \
+		Calculado mediante la Ley de Little: L = lambda * W => W = L / lambda. \
+		Variable endÃ¯Â¿Â½gena. Fuente: Ley de Little (1961).	|
+
+Pacientes_Atendidos_x_Dia=Horas_Especialistas_Sector_Publico*Productividad_Especialista
+	~	pacientes/Dia
+	~	AUXILIAR. Cantidad de pacientes de lista de espera atendidos por dÃ¯Â¿Â½a en el \
+		sector pÃ¯Â¿Â½blico. Variable endÃ¯Â¿Â½gena. Fuente: MINSAL Normas TÃ¯Â¿Â½cnicas.	|
+
+Fraccion_Privado=MIN(0.95,MAX(0.05,Fraccion_Privado_Base+Sensibilidad_Privada*(Tiempo_de_Espera-Tiempo_Espera_Referencia)))
+	~	adimensional
+	~	AUXILIAR. FracciÃ¯Â¿Â½n de la demanda total que se deriva al sector privado, \
+		funcional del tiempo de espera. A mayor espera, mÃ¯Â¿Â½s pacientes optan por lo \
+		privado. Acotada en [0.05, 0.95]. Variable endÃ¯Â¿Â½gena.	|
+
+Demanda_Sector_Privado=Demanda_Total*Fraccion_Privado
+	~	pacientes/Dia
+	~	AUXILIAR. Cantidad de pacientes que buscan atenciÃ¯Â¿Â½n en el sector privado por \
+		dÃ¯Â¿Â½a. Variable endÃ¯Â¿Â½gena. Fuente: SIS/FONASA EstadÃ¯Â¿Â½sticas 2023. \
+		https://www.supersalud.gob.cl/estadisticas	|
+
+Demanda_Sector_Publico=MAX(Demanda_Total-Demanda_Sector_Privado,0)
+	~	pacientes/Dia
+	~	AUXILIAR. Cantidad de pacientes que buscan atenciÃ¯Â¿Â½n en el sector pÃ¯Â¿Â½blico \
+		por dÃ¯Â¿Â½a (ingresan a la lista). Variable endÃ¯Â¿Â½gena.	|
+
+Demanda_Total=4000
+	~	pacientes/Dia
+	~	PARÁMETRO. Demanda total diaria de atenciÃ¯Â¿Â½n especialista (pÃ¯Â¿Â½blico + privado). \
+		Variable exÃ¯Â¿Â½gena. Fuente: MINSAL Plan ReducciÃ¯Â¿Â½n Lista de Espera 2023. \
+		https://www.minsal.cl/lista-de-espera/	|
+
+Horas_Especialistas_Sector_Publico=1000
+	~	horas/Dia
+	~	PARÁMETRO. Horas totales de especialista dedicadas a lista de espera en sector \
+		pÃ¯Â¿Â½blico por dÃ¯Â¿Â½a. Variable exÃ¯Â¿Â½gena. Fuente: DEIS REM (Resumen \
+		EstadÃ¯Â¿Â½stico Mensual). https://deis.minsal.cl/rem/	|
+
+Productividad_Especialista=2.5
+	~	pacientes/horas
+	~	PARÁMETRO. NÃ¯Â¿Â½mero de pacientes de lista de espera atendidos por hora de \
+		especialista. Variable exÃ¯Â¿Â½gena. Fuente: MINSAL Normas TÃ¯Â¿Â½cnicas de \
+		AtenciÃ¯Â¿Â½n.	|
+
+Tasa_Egresos_Administrativos=1e-04
+	~	1/Dia
+	~	PARÁMETRO. FracciÃ¯Â¿Â½n de la lista que egresa por razones administrativas por \
+		dÃ¯Â¿Â½a (equivale a ~3.65% anual). Variable exÃ¯Â¿Â½gena. Fuente: DEIS/MINSAL \
+		(estimado). https://deis.minsal.cl/estadisticas-de-salud/	|
+
+Fraccion_Privado_Base=0.3
+	~	adimensional
+	~	PARÁMETRO. FracciÃ¯Â¿Â½n base de la demanda que se atiende en el sector privado \
+		cuando el tiempo de espera es igual al de referencia. Variable exÃ¯Â¿Â½gena. \
+		Fuente: SIS/FONASA EstadÃ¯Â¿Â½sticas 2023. \
+		https://www.fonasa.cl/sites/fonasa/transparencia/estadisticas	|
+
+Tiempo_Espera_Referencia=840
+	~	Dia
+	~	PARÁMETRO. Tiempo de espera de referencia (días) al cual corresponde la fracciÃ¯Â¿Â½n \
+		privado base. Variable exÃ¯Â¿Â½gena. Fuente: DEIS Lista de Espera promedio \
+		ponderado 2023. https://deis.minsal.cl/estadisticas-de-salud/	|
+
+Sensibilidad_Privada=0.00025
+	~	1/Dia
+	~	PARÁMETRO. Incremento en la fracciÃ¯Â¿Â½n privada por cada dÃ¯Â¿Â½a adicional de \
+		espera respecto al tiempo de referencia. Calibrado para reproducir \
+		comportamiento histÃ¯Â¿Â½rico 2014-2023. Variable exÃ¯Â¿Â½gena.	|
+
+********************************************************
+	.Control
+********************************************************~
+		Simulation Control Parameters
+	|
+
+FINAL TIME  = 3650
+	~	Dia
+	~	The final time for the simulation (10 years).
+	|
+
+INITIAL TIME  = 0
+	~	Dia
+	~	The initial time for the simulation.
+	|
+
+SAVEPER  =
+        TIME STEP
+	~	Dia [0,?]
+	~	The frequency with which output is stored.
+	|
+
+METHOD  = RK4
+	~
+	~	The numerical integration method (Runge-Kutta order 4).
+	|
+
+TIME STEP  = 1
+	~	Dia [0,?]
+	~	The time step for the simulation (1 day).
+	|
+
+\\\---/// Sketch information - do not modify anything except names
+V300  Do not put anything below this section - it will be ignored
+*View 1
+$-1--1--1,0,|12||-1--1--1|-1--1--1|-1--1--1|-1--1--1|-1--1--1|96,96,138,2
+10,1,Lista_de_Espera,500,200,58,28,3,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,2,48,100,200,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,3,5,2,100,0,0,22,0,192,0,-1--1--1,,1|(280,200)|
+1,4,5,1,4,0,0,22,0,192,0,-1--1--1,,1|(390,200)|
+11,5,0,340,200,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,6,Ingreso_Lista,340,230,54,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,7,48,900,200,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,8,10,1,100,0,0,22,0,192,0,-1--1--1,,1|(640,200)|
+1,9,10,7,4,0,0,22,0,192,0,-1--1--1,,1|(780,200)|
+11,10,0,710,200,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,11,Egreso_Atencion,710,230,58,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+12,12,48,900,340,10,8,0,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,13,15,1,100,0,0,22,0,192,0,-1--1--1,,1|(620,280)|
+1,14,15,12,4,0,0,22,0,192,0,-1--1--1,,1|(780,340)|
+11,15,0,710,280,6,8,34,3,0,0,1,0,0,0,0,0,0,0,0,0
+10,16,Egresos_Administrativos,710,310,78,18,40,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,17,Tiempo_de_Espera,500,380,62,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,18,Pacientes_Atendidos_x_Dia,710,130,82,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,19,Fraccion_Privado,300,380,58,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,20,Demanda_Sector_Privado,180,320,72,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,21,Demanda_Sector_Publico,280,270,72,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,22,Demanda_Total,140,200,58,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,23,Horas_Especialistas_Sector_Publico,760,100,98,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,24,Productividad_Especialista,870,130,82,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,25,Tasa_Egresos_Administrativos,870,310,82,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,26,Fraccion_Privado_Base,160,420,72,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,27,Tiempo_Espera_Referencia,370,450,78,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+10,28,Sensibilidad_Privada,200,460,68,18,8,3,0,0,-1,0,0,0,0,0,0,0,0,0
+1,29,21,6,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,30,18,11,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,31,1,16,1,0,0,0,0,192,0,-1--1--1,,1|(580,280)|
+1,32,25,16,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,33,1,17,1,0,0,0,0,192,0,-1--1--1,,1|(440,310)|
+1,34,11,17,1,0,0,0,0,192,0,-1--1--1,,1|(620,320)|
+1,35,16,17,1,0,0,0,0,192,0,-1--1--1,,1|(630,360)|
+1,36,17,19,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,37,19,20,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,38,22,20,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,39,20,21,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,40,22,21,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,41,23,18,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,42,24,18,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,43,26,19,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,44,27,19,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,45,28,19,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+1,46,18,11,0,0,0,0,0,192,0,-1--1--1,,1|(0,0)|
+///---\\\
+:L<%^E!@
+5:Lista_de_Espera
+19:100,0
+24:0
+25:0
+26:0
+23:0
+15:0,0,0,0,0,0
+27:0,
+34:0,
+42:0
+72:0
+73:0
+95:0
+96:0
+97:0
+77:0
+78:0
+102:1
+93:0
+94:0
+92:0
+91:0
+90:0
+87:0
+75:
+43:
+103:8,8,8,3,8
+105:0,0,0,0,0,0,0,0,0,0
+104:Vensim Sans|12||0-0-0|0-0-0|-1--1--1|0-0-255|192-192-192|-1--1--1

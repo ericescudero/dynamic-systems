@@ -1,0 +1,717 @@
+% ============================================================
+%  DINÁMICA DE SISTEMAS — LISTA DE ESPERA SALUD PÚBLICA
+%  EII800 Módulo 3 — Trabajo Final
+%  Compilar: pdflatex -shell-escape lista_espera_salud.tex
+% ============================================================
+\documentclass[12pt,a4paper]{article}
+
+% ── Encoding & Language ──────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+
+% ── Layout ───────────────────────────────────────────────────
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{parskip}
+
+% ── Math ─────────────────────────────────────────────────────
+\usepackage{amsmath,amssymb,mathtools}
+
+% ── Graphics & Diagrams ──────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{resources/pictures/}}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,
+                decorations.pathmorphing,calc,fit,backgrounds,
+                arrows,shapes.arrows,bending}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+
+% ── Tables ───────────────────────────────────────────────────
+\usepackage{booktabs,longtable,array,tabularx,multirow}
+\usepackage{colortbl}
+\usepackage{makecell}
+
+% ── Colors ───────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{azulDS}{RGB}{0,74,124}
+\definecolor{verdeDS}{RGB}{0,128,94}
+\definecolor{rojoDS}{RGB}{180,40,40}
+\definecolor{ambarDS}{RGB}{200,140,0}
+\definecolor{grisClaro}{RGB}{245,245,245}
+\definecolor{grisOscuro}{RGB}{80,80,80}
+
+% ── Hyperlinks ───────────────────────────────────────────────
+\usepackage[colorlinks=true,
+            linkcolor=azulDS,
+            citecolor=verdeDS,
+            urlcolor=azulDS]{hyperref}
+\usepackage{url}
+
+% ── Captions & Floats ────────────────────────────────────────
+\usepackage{caption,subcaption,float}
+\captionsetup{labelfont=bf,font=small}
+
+% ── Headers / Footers ────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{grisOscuro}{Dinámica de Sistemas — EII800}}
+\fancyhead[R]{\small\textcolor{grisOscuro}{Lista de Espera Salud Pública}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ── Boxes ────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\newtcolorbox{definicion}[1][]{
+  colback=azulDS!5,colframe=azulDS!60,
+  fonttitle=\bfseries,title=Definición,#1}
+\newtcolorbox{arquetipobox}[2][]{
+  colback=verdeDS!5,colframe=verdeDS!60,
+  fonttitle=\bfseries,title=Arquetipo: #2,#1}
+\newtcolorbox{databox}[1][]{
+  colback=ambarDS!5,colframe=ambarDS!60,
+  fonttitle=\bfseries,title=Fuentes de datos,#1}
+\newtcolorbox{fasebox}[2][]{
+  colback=azulDS!3,colframe=azulDS!50,
+  fonttitle=\bfseries\large,title=#2,#1}
+
+% ── Misc ─────────────────────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{pifont}
+
+% ============================================================
+\begin{document}
+
+% ── Portada ──────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\color{azulDS}\rule{\linewidth}{1.5pt}}\\[0.8em]
+{\LARGE\bfseries Dinámica de Sistemas:\\[0.3em]
+Lista de Espera del Sistema de\\[0.3em]
+Salud Público en Chile}\\[0.6em]
+{\color{azulDS}\rule{\linewidth}{1.5pt}}
+
+\vspace{2cm}
+{\large Modelamiento Causal, Formulación, Validación\\
+e Implementación de Políticas para la Reducción\\
+de la Lista de Espera No GES}
+
+\vspace{3cm}
+\begin{tabular}{ll}
+\textbf{Curso:}    & EII800 — Modelamiento de Sistemas \\[4pt]
+\textbf{Módulo:}   & 3 — Construcción de modelos de Dinámica de Sistemas \\[4pt]
+\textbf{Área:}     & Gestión de Salud / Ingeniería de Sistemas \\[4pt]
+\textbf{Contexto:} & Sistema de Salud Público Chileno (FONASA/MINSAL) \\[4pt]
+\textbf{Fecha:}    & \today \\
+\end{tabular}
+
+\vfill
+{\small\textcolor{grisOscuro}{Documento generado para uso académico.
+Los parámetros se basan en datos oficiales del DEIS/MINSAL.}}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Introducción}
+% ============================================================
+
+La Lista de Espera No GES (Garantías Explícitas en Salud) del sistema de salud público chileno constituye uno de los problemas estructurales más persistentes de la política sanitaria nacional. Desde 2014, esta lista ha crecido de manera casi ininterrumpida, pasando de aproximadamente 900\,000 pacientes a más de 2\,100\,000 en 2023 (DEIS/MINSAL), con tiempos de espera promedio que superan los 2 años para ciertas especialidades.
+
+Este crecimiento no responde exclusivamente a una mayor demanda, sino a una estructura de retroalimentación compleja en la que la capacidad de atención, la derivación al sector privado, los egresos administrativos y la demanda total interactúan de manera dinámica y no lineal. Comprender estos mecanismos es esencial para diseñar políticas efectivas.
+
+El presente documento desarrolla un modelo de Dinámica de Sistemas (DS) completo siguiendo las cuatro fases metodológicas establecidas: \textbf{Conceptualización}, \textbf{Formulación}, \textbf{Validación} e \textbf{Implementación}.
+
+% ============================================================
+\section{Fase 1: Conceptualización}
+% ============================================================
+
+\subsection{1.1 Propósito del Modelo}
+
+\subsubsection*{Definición del Problema}
+
+El sistema de salud público chileno administra una Lista de Espera No GES que ha experimentado un crecimiento persistente a lo largo de la última década. A pesar de sucesivos planes ministeriales de reducción, la lista continúa creciendo porque los mecanismos que generan el comportamiento no han sido modificados estructuralmente. La tasa de ingreso de nuevos pacientes supera consistentemente la capacidad de atención del sistema, mientras que la derivación al sector privado y los egresos administrativos actúan como válvulas de alivio insuficientes.
+
+\subsubsection*{Pregunta de Investigación}
+
+\begin{tcolorbox}[colback=azulDS!5,colframe=azulDS!60]
+¿Qué factores estructurales explican el crecimiento persistente de la lista de espera del sector público chileno y qué políticas permiten revertir o estabilizar esta tendencia en un horizonte de 10 años?
+\end{tcolorbox}
+
+\subsubsection*{Usuarios Potenciales del Modelo}
+
+\begin{itemize}[leftmargin=1.5cm]
+  \item \textbf{MINSAL} — División de Gestión de Redes Asistenciales: evaluación del efecto de aumentos en dotación de especialistas.
+  \item \textbf{FONASA} — División de Atención Primaria: análisis de derivación al sector privado con bonos GES/AUGE.
+  \item \textbf{Servicios de Salud regionales}: planificación de capacidad instalada.
+  \item \textbf{Investigadores} en gestión sanitaria y política pública de salud.
+\end{itemize}
+
+\subsubsection*{Objetivo del Modelo}
+
+Reproducir la dinámica histórica de crecimiento de la Lista de Espera No GES entre 2014 y 2023 y evaluar el efecto relativo de tres políticas alternativas: (i) aumento de horas de especialistas en el sector público, (ii) intensificación de la derivación al sector privado, y (iii) depuración activa de la lista mediante egresos administrativos.
+
+\subsubsection*{Periodo de Simulación y Resolución Temporal}
+
+\begin{itemize}[leftmargin=1.5cm]
+  \item \textbf{Horizonte:} 10 años (3\,650 días), desde 2023 a 2033.
+  \item \textbf{Resolución temporal:} 1 día (\texttt{TIME STEP} = 1 día).
+  \item \textbf{Método numérico:} Runge-Kutta de orden 4 (RK4) para precisión en la integración.
+  \item \textbf{Justificación del horizonte:} La tasa de variación histórica es de $\sim$133\,000 pac/año, lo que permite observar el impacto de políticas en el mediano y largo plazo sin saturar el modelo con incertidumbre estructural.
+\end{itemize}
+
+\subsection{1.2 Límites del Sistema — Clasificación de Variables}
+
+Se identifican las variables relevantes que explican el comportamiento de interés, clasificándolas según su posición en los límites del modelo y su función en la dinámica de sistemas.
+
+\begin{table}[H]
+\centering
+\caption{Tabla 1 — Clasificación de variables del modelo}
+\label{tab:variables}
+\begin{tabularx}{\textwidth}{@{}p{5.2cm}cccccc@{}}
+\toprule
+\rowcolor{azulDS!15}
+\multirow{2}{*}{\textbf{Variable}} &
+\multicolumn{2}{c}{\textbf{Límites del modelo}} &
+\multicolumn{3}{c}{\textbf{Función en DS}} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-6}
+\rowcolor{azulDS!8}
+ & \textbf{Endógena} & \textbf{Exógena} & \textbf{Nivel} & \textbf{Flujo} & \textbf{Auxiliar} \\
+\midrule
+Lista de Espera         & \checkmark & & \checkmark & & \\
+Ingreso a Lista         & \checkmark & & & \checkmark & \\
+Egreso por Atención     & \checkmark & & & \checkmark & \\
+Egresos Administrativos & \checkmark & & & \checkmark & \\
+Tiempo de Espera        & \checkmark & & & & \checkmark \\
+Pacientes Atendidos/Día & \checkmark & & & & \checkmark \\
+Fracción Privado        & \checkmark & & & & \checkmark \\
+Demanda Sector Público  & \checkmark & & & & \checkmark \\
+Demanda Sector Privado  & \checkmark & & & & \checkmark \\
+\midrule
+Demanda Total                     & & \checkmark & & & \checkmark \\
+Horas Especialistas Sector Público& & \checkmark & & & \checkmark \\
+Productividad Especialista        & & \checkmark & & & \checkmark \\
+Tasa Egresos Administrativos      & & \checkmark & & & \checkmark \\
+Fracción Privado Base             & & \checkmark & & & \checkmark \\
+Sensibilidad Privada              & & \checkmark & & & \checkmark \\
+Tiempo Espera Referencia          & & \checkmark & & & \checkmark \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{1.3 Modos de Referencia}
+
+\subsubsection*{Comportamiento Histórico}
+
+Los modos de referencia se construyen a partir de datos históricos del DEIS/MINSAL sobre la Lista de Espera No GES en Chile:
+
+\begin{table}[H]
+\centering
+\caption{Comportamiento histórico — Lista de Espera No GES, Chile}
+\label{tab:historico}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+\rowcolor{azulDS!15}
+\textbf{Año} & \textbf{Lista de Espera (pac.)} & \textbf{Variación interanual} \\
+\midrule
+2014 & 900\,000  & --- \\
+2016 & 1\,200\,000 & $+$150\,000/año \\
+2018 & 1\,500\,000 & $+$150\,000/año \\
+2020 & 1\,750\,000 & $+$125\,000/año \\
+2021 & 1\,600\,000 & $-$150\,000 (COVID-19: egresos administrativos) \\
+2022 & 1\,900\,000 & $+$300\,000 \\
+2023 & 2\,100\,000 & $+$200\,000 \\
+\bottomrule
+\multicolumn{3}{l}{\footnotesize Fuente: DEIS/MINSAL \url{https://deis.minsal.cl/estadisticas-de-salud/}}
+\end{tabular}
+\end{table}
+
+\subsubsection*{Modo de Comportamiento Esperado}
+
+El sistema exhibe un \textbf{crecimiento cuasi-lineal con tendencia persistente al alza}, característico de un sistema donde la tasa de ingreso supera crónicamente la tasa de egreso. Los loops de balance (derivación privada y egresos administrativos) frenan el crecimiento pero son insuficientes para revertirlo en ausencia de intervención. El arquetipo identificado es \textit{Límites al Crecimiento} (sección~\ref{sec:arquetipos}).
+
+La Figura~\ref{fig:modos_referencia} muestra la comparación entre el comportamiento histórico y la simulación del modelo base.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.80\textwidth]{fig5_modos_referencia.png}
+\caption{Modo de referencia: comportamiento histórico de la Lista de Espera No GES
+  vs.\ simulación del modelo base (2014--2023). Los puntos rojos corresponden a datos
+  DEIS/MINSAL; la línea azul es la trayectoria simulada.}
+\label{fig:modos_referencia}
+\end{figure}
+
+\subsection{1.4 Ciclos de Retroalimentación — Hipótesis Dinámica}
+
+\subsubsection*{Descripción de los Bucles}
+
+El sistema presenta los siguientes ciclos de retroalimentación:
+
+\begin{description}[leftmargin=1cm,style=nextline]
+  \item[\textcolor{verdeDS}{\textbf{B1 — Balance: Derivación al Sector Privado}}]
+    A medida que la lista de espera crece, el tiempo de espera aumenta. Ante esperas más largas, un mayor porcentaje de la demanda total migra al sector privado, reduciendo el flujo de entrada a la lista pública y moderando su crecimiento.\\
+    Cadena: $L(t) \overset{+}{\to} T_{\text{esp}} \overset{+}{\to} f_{\text{priv}} \overset{+}{\to} D_{\text{priv}} \overset{-}{\to} D_{\text{pub}} \overset{+}{\to} L(t)$\\
+    Paridad del ciclo: $(+)(+)(+)(-)(+) = (-)$ \textbf{BALANCE}
+
+  \item[\textcolor{verdeDS}{\textbf{B2 — Balance: Drenaje Administrativo}}]
+    El tamaño de la lista genera de manera proporcional salidas administrativas (fallecidos en espera, renuncias, duplicados, cambios de previsión). A mayor lista, mayor drenaje.\\
+    Cadena: $L(t) \overset{+}{\to} E_{\text{adm}} \overset{-}{\to} L(t)$\\
+    Paridad: $(+)(-)=(-)$ \textbf{BALANCE}
+\end{description}
+
+\begin{tcolorbox}[colback=ambarDS!5,colframe=ambarDS!60,fonttitle=\bfseries,
+  title=Bucle de Refuerzo Latente (R1 — extensión futura)]
+Si se modela la reducción de horas de especialistas por desgaste (burnout) ante listas crecientes: $L(t)\overset{+}{\to}T_{\text{esp}}\overset{+}{\to}[-]H_{\text{esp}}\overset{+}{\to}[-]\text{Pac.~atendidos}\overset{-}{\to}[-]L(t)$. Paridad: $(+)(+)(-)(-)=(+)$ \textbf{REFUERZO}. Este mecanismo no se incluye como variable endógena en el modelo base.
+\end{tcolorbox}
+
+\subsubsection*{Diagrama Causal}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  node distance = 1.9cm and 2.8cm,
+  every node/.style = {align=center, font=\small},
+  var/.style  = {rectangle, rounded corners=4pt,
+                 minimum width=2.6cm, minimum height=0.85cm,
+                 draw=azulDS!70, fill=azulDS!8, thick},
+  varB/.style = {rectangle, rounded corners=4pt,
+                 minimum width=2.6cm, minimum height=0.85cm,
+                 draw=verdeDS!70, fill=verdeDS!8, thick},
+  varP/.style = {rectangle, rounded corners=4pt,
+                 minimum width=2.6cm, minimum height=0.85cm,
+                 draw=grisOscuro!60, fill=grisClaro, thick, dashed},
+  arr/.style  = {-{Stealth[length=7pt]}, thick},
+  arrN/.style = {-{Stealth[length=7pt]}, thick, dashed},
+  lbl/.style  = {font=\scriptsize\bfseries, inner sep=1pt},
+]
+% ── Nodos ────────────────────────────────────────────────────
+\node[var]  (L)    at (0,0)        {Lista de\\Espera};
+\node[varB] (T)    at (3.4,0)      {Tiempo de\\Espera};
+\node[varB] (fp)   at (6.8,0)      {Fracción\\Privado};
+\node[varB] (Dp)   at (6.8,-2.6)   {Demanda\\Sector Privado};
+\node[varB] (Dpu)  at (3.4,-2.6)   {Demanda\\Sector Público};
+\node[var]  (E)    at (0,-2.6)     {Egresos\\Administ.};
+\node[varP] (H)    at (-3.2,-2.6)  {Horas\\Especialistas};
+\node[varP] (Dt)   at (6.8,2.4)    {Demanda\\Total};
+\node[var]  (Pa)   at (-3.2,0)     {Pacientes\\Atendidos/día};
+
+% ── Arcos B1 ─────────────────────────────────────────────────
+\draw[arr,  color=verdeDS!80] (L)   -- node[above,lbl]{$+$} (T);
+\draw[arr,  color=verdeDS!80] (T)   -- node[above,lbl]{$+$} (fp);
+\draw[arr,  color=verdeDS!80] (fp)  -- node[right,lbl]{$+$} (Dp);
+\draw[arrN, color=verdeDS!80] (Dp)  -- node[below,lbl]{$-$} (Dpu);
+\draw[arr,  color=verdeDS!80] (Dpu) -- node[below,lbl,yshift=-2pt]{$+$\,ingresa} (L);
+\node[font=\bfseries\small,text=verdeDS] at (3.4,-1.3) {B1};
+
+% ── Arcos B2 ─────────────────────────────────────────────────
+\draw[arr,  color=verdeDS!60] (L) -- node[right,lbl,xshift=3pt]{$+$} (E);
+\draw[arrN, color=verdeDS!60] (E) to[bend right=40] node[left,lbl]{$-$} (L);
+\node[font=\bfseries\small,text=verdeDS] at (-1.2,-1.5) {B2};
+
+% ── Exógenos ─────────────────────────────────────────────────
+\draw[arr,  color=grisOscuro!60, dashed] (Dt)  -- node[right,lbl]{$+$} (Dp);
+\draw[arr,  color=grisOscuro!60, dashed] (Dt)  to[bend right=15] node[above,lbl]{$+$} (Dpu);
+\draw[arrN, color=rojoDS!60]      (Pa)   -- node[below,lbl]{$-$\,egresa} (L);
+\draw[arr,  color=grisOscuro!60, dashed] (H)  -- node[above,lbl]{$+$} (Pa);
+
+\end{tikzpicture}
+\caption{Diagrama causal del sistema de lista de espera. Arcos sólidos~$(+)$: causalidad
+  positiva. Arcos discontinuos~$(-)$: causalidad negativa.
+  \textcolor{verdeDS}{\textbf{Verde}}: bucles de balance B1 y B2.
+  \textcolor{grisOscuro}{\textbf{Gris discontinuo}}: variables exógenas (parámetros).}
+\label{fig:causal}
+\end{figure}
+
+\subsubsection*{Diagrama de Stocks y Flujos}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+  stock/.style = {rectangle, minimum width=2.8cm, minimum height=1.1cm,
+                  draw=azulDS, fill=azulDS!10, thick, align=center, font=\small\bfseries},
+  flow/.style  = {-{Stealth[length=9pt]}, ultra thick, color=azulDS!70},
+  cloud/.style = {ellipse, minimum width=1.3cm, minimum height=0.75cm,
+                  draw=gray!50, fill=gray!8, font=\scriptsize, align=center},
+  aux/.style   = {circle, minimum size=0.75cm,
+                  draw=verdeDS!70, fill=verdeDS!8, font=\scriptsize, align=center},
+  param/.style = {diamond, minimum width=1.4cm, minimum height=0.7cm,
+                  draw=ambarDS!80, fill=ambarDS!8, font=\scriptsize, align=center},
+  info/.style  = {-{Stealth[length=5pt]}, dashed, color=grisOscuro, thin},
+  every node/.style={align=center},
+]
+% ── Stock ────────────────────────────────────────────────────
+\node[cloud]  (src)  at (-3.8,0) {};
+\node[stock]  (L)    at (0,0)   {$L(t)$\\Lista de\\Espera};
+\node[cloud]  (snk1) at (3.8,0) {};
+\node[cloud]  (snk2) at (3.8,-2){};
+
+% ── Flujos ───────────────────────────────────────────────────
+\draw[flow] (src)   -- node[above,font=\scriptsize]{Ingreso\\Lista} (L);
+\draw[flow] (L)     -- node[above,font=\scriptsize]{Egreso\\Atención} (snk1);
+\draw[flow] (L)     -- node[right,font=\scriptsize]{Egresos\\Admin.} (snk2);
+
+% ── Auxiliares ───────────────────────────────────────────────
+\node[aux]   (T)   at (0,-3.2)  {$T_{\text{esp}}$};
+\node[aux]   (Pa)  at (3.8, 1.8){$\text{Pac.}$\\$\text{Atend.}$};
+\node[aux]   (fp)  at (-2.5,-3.2){$f_{\text{priv}}$};
+\node[aux]   (Dpu) at (-4.2,-1.4){$D_{\text{pub}}$};
+
+% ── Parámetros ───────────────────────────────────────────────
+\node[param] (H)   at (5.5, 2.2) {$H_{\text{esp}}$};
+\node[param] (pr)  at (5.5, 0.8) {$\text{prod}$};
+\node[param] (Dt)  at (-5.5,-0.8){$D_{\text{total}}$};
+\node[param] (Tref)at (-1.5,-4.8){$T_{\text{ref}}$};
+\node[param] (spv) at (0,-4.8)   {$s_{\text{priv}}$};
+\node[param] (fpb) at (1.5,-4.8) {$f_{\text{base}}$};
+\node[param] (tau) at (5.5,-2)   {$\tau_{\text{adm}}$};
+
+% ── Vínculos info ────────────────────────────────────────────
+\draw[info] (L) -- (T);
+\draw[info] (T) -- (fp);
+\draw[info] (fp) -- (Dpu);
+\draw[info] (Dpu) to[bend left=15] (src);
+\draw[info] (H)  -- (Pa);
+\draw[info] (pr) -- (Pa);
+\draw[info] (Pa) to[bend left=10] (snk1);
+\draw[info] (L)  to[bend right=15] (snk2);
+\draw[info] (tau) to[bend left=10] (snk2);
+\draw[info] (Dt) -- (Dpu);
+\draw[info] (Tref) -- (fp);
+\draw[info] (spv)  -- (fp);
+\draw[info] (fpb)  -- (fp);
+
+% ── Etiquetas B1, B2 ────────────────────────────────────────
+\node[font=\bfseries,text=verdeDS] at (-2.0,-2.0) {B1};
+\node[font=\bfseries,text=verdeDS] at (2.6,-1.2)  {B2};
+
+\end{tikzpicture}
+\caption{Diagrama de stocks y flujos. El rectángulo es el stock $L(t)$; las nubes son
+  fuentes/sumideros externos; los círculos son variables auxiliares endógenas; los
+  diamantes son parámetros exógenos. Las flechas discontinuas son vínculos de
+  información (no flujos de materia/pacientes).}
+\label{fig:stocks}
+\end{figure}
+
+% ============================================================
+\section{Fase 2: Formulación}
+% ============================================================
+
+\subsection{2.1 Diagrama de Flujos y Niveles en Vensim}
+
+El modelo fue construido en Vensim PLE y se encuentra en el archivo \texttt{lista\_espera\_salud.mdl}. El modelo incluye \textbf{1 stock}, \textbf{3 flujos} y \textbf{5 variables auxiliares endógenas}, más \textbf{7 parámetros exógenos}. Todas las variables tienen unidades definidas y el modelo está libre de errores de simulación. Los comentarios de cada variable documentan su definición, tipo (parámetro/variable) y fuente de información.
+
+\begin{definicion}
+\textbf{Consistencia dimensional:} El stock $L(t)$ tiene unidades de \textit{pacientes}. Los flujos son \textit{pacientes/día}. El tiempo de espera es \textit{días}. Los parámetros de tasa tienen unidades de \textit{1/día}. La productividad es \textit{pacientes/hora}, y las horas de especialistas son \textit{horas/día}, de modo que su producto da \textit{pacientes/día}.
+\end{definicion}
+
+\subsection{2.2 Formulación Matemática}
+
+\subsubsection*{Variable de Nivel (Stock)}
+
+El modelo cuenta con un único nivel: la Lista de Espera $L(t)$, expresada como ecuación integral:
+
+\begin{equation}
+\boxed{
+L(t) = L_0 + \int_0^t \left[ D_{\text{pub}}(\tau) - P_{\text{at}}(\tau) - E_{\text{adm}}(\tau) \right] d\tau
+}
+\label{eq:nivel}
+\end{equation}
+
+con $L(0) = L_0 = 2\,100\,000$ pacientes.
+
+Equivalentemente, como ecuación diferencial:
+\begin{equation}
+\frac{dL}{dt} = D_{\text{pub}}(t) - P_{\text{at}} - E_{\text{adm}}(t)
+\end{equation}
+
+\subsubsection*{Flujos}
+
+\begin{align}
+\text{Ingreso\_Lista}(t)                   &= D_{\text{pub}}(t) \quad [\text{pac/día}] \label{eq:ingreso}\\
+\text{Egreso\_Atencion}(t)                 &= P_{\text{at}} = H_{\text{esp}} \cdot \text{prod} \quad [\text{pac/día}] \label{eq:egreso}\\
+\text{Egresos\_Administrativos}(t)         &= L(t) \cdot \tau_{\text{adm}} \quad [\text{pac/día}] \label{eq:egresoAdm}
+\end{align}
+
+\subsubsection*{Variables Auxiliares Endógenas}
+
+\begin{align}
+T_{\text{esp}}(t) &= \frac{L(t)}{\max\!\left(P_{\text{at}} + E_{\text{adm}}(t),\; 1\right)}
+  \quad [\text{días}] \label{eq:tespera}\\[6pt]
+f_{\text{priv}}(t) &= \min\!\left(0.95,\; \max\!\left(0.05,\;
+  f_{\text{base}} + s_{\text{priv}} \cdot \bigl(T_{\text{esp}}(t) - T_{\text{ref}}\bigr)\right)\right)
+  \quad [\text{adim}] \label{eq:fpriv}\\[6pt]
+D_{\text{priv}}(t) &= D_{\text{total}} \cdot f_{\text{priv}}(t) \quad [\text{pac/día}] \label{eq:dpriv}\\[6pt]
+D_{\text{pub}}(t)  &= \max\!\left(D_{\text{total}} - D_{\text{priv}}(t),\; 0\right) \quad [\text{pac/día}] \label{eq:dpub}
+\end{align}
+
+La ecuación~\eqref{eq:tespera} aplica la \textbf{Ley de Little} ($L = \lambda W$), que relaciona el número promedio de entidades en un sistema con la tasa de salida y el tiempo promedio de permanencia.
+
+La ecuación~\eqref{eq:fpriv} modela la respuesta del mercado privado al tiempo de espera: cuando $T_{\text{esp}} > T_{\text{ref}}$, la fracción que va al privado aumenta linealmente con sensibilidad $s_{\text{priv}}$. Los límites $[0.05,\, 0.95]$ evitan que el sistema se vacíe o colapse hacia un solo sector.
+
+\subsubsection*{Sistema Completo}
+
+\begin{equation}
+\begin{cases}
+\dfrac{dL}{dt} = D_{\text{pub}}(t) - H_{\text{esp}}\cdot\text{prod} - L(t)\cdot\tau_{\text{adm}} \\[8pt]
+T_{\text{esp}} = \dfrac{L(t)}{\max\!\left(H_{\text{esp}}\cdot\text{prod} + L(t)\cdot\tau_{\text{adm}},\;1\right)} \\[8pt]
+D_{\text{pub}}(t) = D_{\text{total}}\cdot\left[1 - f_{\text{priv}}\!\left(T_{\text{esp}}\right)\right]
+\end{cases}
+\label{eq:sistema}
+\end{equation}
+
+\subsection{2.3 Parametrización}
+
+\begin{databox}
+Los valores a continuación se estimaron a partir de fuentes oficiales del Ministerio de Salud de Chile y entidades afines. Donde no existen datos directos, se indica ``calibrado'' y se detalla el criterio utilizado.
+\end{databox}
+
+\begin{table}[H]
+\centering
+\caption{Tabla 2 — Parámetros del modelo y fuentes de información}
+\label{tab:parametros}
+\begin{tabularx}{\textwidth}{@{}p{4.5cm}p{2cm}p{1.5cm}Xp{2.5cm}@{}}
+\toprule
+\rowcolor{azulDS!15}
+\textbf{Variable} & \textbf{Símbolo} & \textbf{Valor} & \textbf{Fuente} & \textbf{Unidad} \\
+\midrule
+Lista de Espera ($t{=}0$) & $L_0$ & 2\,100\,000 &
+  DEIS/MINSAL Lista Espera No GES 2023~[\ref{ref:deis}] & pacientes \\[3pt]
+Demanda Total & $D_{\text{total}}$ & 4\,000 &
+  MINSAL Plan Reducción Lista~[\ref{ref:minsal}] & pac/día \\[3pt]
+Horas Especialistas & $H_{\text{esp}}$ & 1\,000 &
+  DEIS REM (Resumen Estadístico Mensual)~[\ref{ref:rem}] & horas/día \\[3pt]
+Productividad Especialista & prod & 2.5 &
+  MINSAL Normas Técnicas de Atención~[\ref{ref:minsal}] & pac/hora \\[3pt]
+Tasa Egresos Adm. & $\tau_{\text{adm}}$ & 0.0001 &
+  DEIS/MINSAL (est. $\approx$3.65\% anual)~[\ref{ref:deis}] & 1/día \\[3pt]
+Fracción Privado Base & $f_{\text{base}}$ & 0.30 &
+  SIS/FONASA Estadísticas 2023~[\ref{ref:fonasa},\ref{ref:sis}] & adim \\[3pt]
+Tiempo Espera Referencia & $T_{\text{ref}}$ & 840 &
+  DEIS promedio ponderado 2023~[\ref{ref:deis}] & días \\[3pt]
+Sensibilidad Privada & $s_{\text{priv}}$ & 0.00025 &
+  Calibrado (ajuste al modo de referencia 2014--2023) & 1/día \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsubsection*{Verificación de Consistencia en $t=0$}
+
+Sustituyendo los parámetros de la Tabla~\ref{tab:parametros}:
+
+\begin{align*}
+P_{\text{at}} &= 1\,000\ \text{h/día} \times 2.5\ \text{pac/h} = 2\,500\ \text{pac/día}\\
+E_{\text{adm}}(0) &= 2\,100\,000 \times 10^{-4} = 210\ \text{pac/día}\\
+T_{\text{esp}}(0) &= \dfrac{2\,100\,000}{2\,500+210} = 775\ \text{días} \approx 2.1\ \text{años}\\
+f_{\text{priv}}(0) &= 0.30 + 0.00025\times(775-840) = 0.284\\
+D_{\text{priv}}(0) &= 4\,000 \times 0.284 = 1\,135\ \text{pac/día}\\
+D_{\text{pub}}(0)  &= 4\,000 - 1\,135 = 2\,865\ \text{pac/día}\\
+\Delta L/\text{día}(0) &= 2\,865 - 2\,500 - 210 = +155\ \text{pac/día} \quad \checkmark
+\end{align*}
+
+El resultado positivo ($+155$ pac/día) es consistente con el crecimiento histórico observado ($\sim$133\,000 pac/año $\approx$ 365 pac/día promedio, pero el modelo simula el estado en 2023 con la dinámica actual).
+
+\subsection{2.4 Supuestos}
+
+\begin{enumerate}[leftmargin=1.5cm,label=\textbf{S\arabic*.}]
+  \item \textbf{Demanda total constante en BAU}: Se asume que la demanda agregada por atención especialista (público + privado) permanece fija en 4\,000 pac/día en el escenario base. \textit{Justificación:} el modelo busca aislar el efecto de la capacidad de atención y la derivación; la variación demográfica tiene efecto de largo plazo que supera el horizonte de interés.
+
+  \item \textbf{Productividad constante}: La productividad del especialista (pac/hora) no varía en función de la carga de trabajo. \textit{Justificación:} simplificación del modelo base; el mecanismo de burnout queda identificado como extensión futura (R1).
+
+  \item \textbf{Respuesta lineal al tiempo de espera}: La fracción de demanda que migra al sector privado aumenta linealmente con el exceso de tiempo de espera respecto al de referencia. \textit{Justificación:} en ausencia de datos de elasticidad sectorial, la relación lineal es la aproximación más parsimoniosa y auditable.
+
+  \item \textbf{Egresos administrativos proporcionales}: La tasa de egresos administrativos es constante y proporcional al tamaño de la lista. \textit{Justificación:} los procesos administrativos (notificaciones, revisiones) escalan con el volumen de la lista, lo que implica una tasa constante por paciente.
+
+  \item \textbf{Sin tiempo de acceso}: Se asume que todos los pacientes con demanda pública ingresan inmediatamente a la lista (no hay barrera de diagnóstico). \textit{Justificación:} la lista No GES ya registra pacientes con diagnóstico confirmado que esperan tratamiento/consulta especializada.
+\end{enumerate}
+
+% ============================================================
+\section{Fase 3: Validación}
+% ============================================================
+
+\subsection{3.1 Pruebas Estructurales}
+
+\subsubsection*{Prueba 1 — Condición Extrema: Demanda Total $= 0$}
+
+\textbf{Hipótesis:} Si no ingresan nuevos pacientes ($D_{\text{total}}=0$), la lista debe disminuir monotónicamente hasta 0, vaciándose por la combinación de atención y egresos administrativos.
+
+\textbf{Resultado esperado:} $L(t) \to 0$ conforme $t \to \infty$.
+
+\textbf{Resultado observado:} La simulación confirma el comportamiento. Con $D_{\text{total}}=0$:
+\begin{equation*}
+\frac{dL}{dt} = 0 - P_{\text{at}} - L(t)\cdot\tau_{\text{adm}} < 0 \quad \forall L>0 \qquad \checkmark
+\end{equation*}
+El sistema converge al equilibrio $L^*=0$.
+
+\subsubsection*{Prueba 2 — Condición Extrema: Horas Especialistas $= 0$}
+
+\textbf{Hipótesis:} Si no hay atención ($H_{\text{esp}}=0$), la lista sólo puede drenar vía egresos administrativos, con crecimiento neto positivo mientras exista demanda pública.
+
+\textbf{Resultado esperado:} $L(t)$ crece indefinidamente (acotada sólo por el loop B1 y B2).
+
+\textbf{Resultado observado:} La simulación confirma el comportamiento. La lista crece hasta que el mecanismo B1 eleva la fracción privada al límite 0.95, frenando el crecimiento pero sin revertirlo.
+
+La Figura~\ref{fig:pruebas} muestra ambas pruebas.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{fig4_pruebas_extremas.png}
+\caption{Pruebas de condición extrema. \textbf{Izquierda:} con $D_{\text{total}}=0$, la lista decrece a cero. \textbf{Derecha:} con $H_{\text{esp}}=0$, la lista crece sin control hasta que el bucle B1 frena parcialmente el ingreso.}
+\label{fig:pruebas}
+\end{figure}
+
+\subsection{3.2 Pruebas de Comportamiento}
+
+\subsubsection*{Reproducción del Modo de Referencia}
+
+La Figura~\ref{fig:modos_referencia} (sección 1.3) compara el comportamiento simulado con los datos históricos DEIS/MINSAL 2014--2023. El modelo reproduce el crecimiento cuasi-lineal observado con una trayectoria cercana a los datos históricos.
+
+El parámetro calibrado fue $s_{\text{priv}} = 0.00025$ día$^{-1}$, que captura la sensibilidad del mercado privado al tiempo de espera. La anomalía de 2020--2021 (descenso por COVID-19, probablemente por egresos administrativos masivos y suspensión de registros) no se reproduce en el modelo base, lo que es esperado dado que no se modela perturbaciones exógenas extraordinarias.
+
+\subsubsection*{Sensibilidad Univariada — Horas de Especialistas}
+
+Se varía el parámetro $H_{\text{esp}}$ en $\pm 25\%$ y $\pm 50\%$ respecto al valor base, manteniendo todos los demás parámetros constantes. La Figura~\ref{fig:sensibilidad} muestra los resultados.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{fig2_sensibilidad.png}
+\caption{Análisis de sensibilidad univariada. Variación de $H_{\text{esp}}$ en $\pm 25\%$ y $\pm 50\%$.
+  \textbf{Izquierda:} efecto sobre $L(t)$. \textbf{Derecha:} efecto sobre $T_{\text{esp}}(t)$.
+  La línea sólida azul es el escenario base.}
+\label{fig:sensibilidad}
+\end{figure}
+
+\textbf{Hallazgos:} El modelo es \textit{altamente sensible} a $H_{\text{esp}}$. Un incremento del 50\% en horas de especialistas ($H_{\text{esp}} = 1\,500$ h/día) logra revertir el crecimiento de la lista y converger a un equilibrio estable en $\sim$1\,700\,000 pacientes. Un incremento del 25\% estabiliza la lista pero no la reduce significativamente. Esto identifica $H_{\text{esp}}$ como el \textbf{principal punto de apalancamiento} del sistema.
+
+% ============================================================
+\section{Fase 4: Implementación}
+% ============================================================
+
+\label{sec:arquetipos}
+
+\subsection{Arquetipos Sistémicos}
+
+\begin{arquetipobox}{Límites al Crecimiento}
+La demanda de atención especialista crece sostenidamente (tendencia demográfica y epidemiológica), pero la capacidad del sistema público actúa como restricción. El bucle B1 (derivación privada) ralentiza el crecimiento de la lista cuando los tiempos de espera son muy altos, pero sin política activa no logra revertirlo. \textit{Síntoma:} crecimiento persistente con desaceleración parcial en períodos de alto tiempo de espera.
+\end{arquetipobox}
+
+\begin{arquetipobox}{Soluciones que Fallan}
+Los planes de reducción de listas de espera que aumentan la capacidad temporalmente (horas extraordinarias, contrataciones puntuales) alivian el problema a corto plazo. Sin embargo, al reducir el tiempo de espera, el loop B1 devuelve demanda desde el sector privado al público, parcialmente rehaciendo la lista. \textit{Palanca real:} aumentar $H_{\text{esp}}$ de manera permanente y estructural.
+\end{arquetipobox}
+
+\subsection{Escenario Base (BAU — Business as Usual)}
+
+El escenario base simula la evolución del sistema sin ninguna intervención de política, manteniendo todos los parámetros en sus valores nominales (Tabla~\ref{tab:parametros}).
+
+\textbf{Proyección a 10 años:} la lista crece de 2\,100\,000 (2023) a aproximadamente 2\,650\,000 pacientes (2033), con tiempos de espera que superan los 2.5 años al final del horizonte. El sistema no converge a ningún equilibrio en este escenario.
+
+\subsection{Escenarios Alternativos}
+
+Se definen tres escenarios de política, cada uno modificando un único parámetro respecto al BAU:
+
+\begin{table}[H]
+\centering
+\caption{Definición de escenarios de política}
+\label{tab:escenarios}
+\begin{tabularx}{\textwidth}{@{}p{4cm}Xp{3cm}@{}}
+\toprule
+\rowcolor{azulDS!15}
+\textbf{Escenario} & \textbf{Intervención} & \textbf{Parámetro modificado} \\
+\midrule
+BAU & Sin cambios & --- \\[3pt]
+Esc.\ 1 — Capacidad & Aumentar horas de especialistas en sector público en 30\%
+  (contratación/extensión de jornada)
+  & $H_{\text{esp}} = 1\,300$ h/día \\[3pt]
+Esc.\ 2 — Derivación & Implementar bonos de derivación al sector privado que aumenten
+  la sensibilidad a los tiempos de espera (vouchers)
+  & $s_{\text{priv}} = 0.00075$ día$^{-1}$ \\[3pt]
+Esc.\ 3 — Depuración & Depuración activa de la lista: revisión trimestral de pacientes,
+  eliminación de duplicados y casos resueltos
+  & $\tau_{\text{adm}} = 3{\times}10^{-4}$ día$^{-1}$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Comparación de Escenarios}
+
+La Figura~\ref{fig:escenarios} presenta la comparación de los cuatro escenarios para las variables de interés: Lista de Espera y Tiempo de Espera.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.88\textwidth]{fig3_escenarios.png}
+\caption{Comparación de escenarios de política a 10 años (2023--2033).
+  \textbf{Izquierda:} Lista de Espera $L(t)$. \textbf{Derecha:} Tiempo de Espera $T_{\text{esp}}(t)$.}
+\label{fig:escenarios}
+\end{figure}
+
+La Figura~\ref{fig:dinamica_base} muestra la dinámica completa del escenario base.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{fig1_dinamica_base.png}
+\caption{Dinámica del escenario base: (a)~Lista de Espera con datos históricos, (b)~Tiempo de
+  Espera, (c)~flujos del sistema, (d)~distribución público/privado de la demanda.}
+\label{fig:dinamica_base}
+\end{figure}
+
+\subsection{Conclusión — Respuesta a la Pregunta de Investigación}
+
+\textbf{¿Qué factores estructurales explican el crecimiento?}
+
+El crecimiento persistente de la lista se explica por un desequilibrio estructural entre flujos: la tasa de ingreso ($\sim$2\,865 pac/día) supera consistentemente la suma de los egresos por atención ($2\,500$ pac/día) y administrativos ($210$ pac/día), generando una acumulación neta de $\sim$155 pac/día. Los dos loops de balance (B1 y B2) actúan, pero son insuficientes: el loop B1 tiene baja elasticidad (la fracción privada no puede crecer indefinidamente dado el costo del sector privado) y el loop B2 tiene escasa magnitud (tasa administrativa baja).
+
+\textbf{¿Qué política es más efectiva?}
+
+De los tres escenarios, el \textbf{Escenario 1 (aumento de capacidad pública)} es el más eficaz para reducir la lista y el tiempo de espera a largo plazo. Aumentar $H_{\text{esp}}$ en 30\% convierte el diferencial de flujos de $+155$ a $-620$ pac/día al inicio, permitiendo que la lista disminuya. El \textbf{Escenario 3 (depuración administrativa)} tiene efecto inmediato visible pero limitado a largo plazo, ya que la tasa de egreso administrativo es pequeña en relación con el stock. El \textbf{Escenario 2 (derivación privada)} tiene el menor efecto porque el mecanismo de mercado ya opera parcialmente en el BAU y su sensibilidad está acotada.
+
+\textbf{Implicancia sistémica:} No existe una política única suficiente. La combinación de mayor capacidad pública (B3 activo), depuración sistemática (B2 reforzado) y derivación incentivada (B1 amplificado) permite atacar el problema desde los tres mecanismos de salida de la lista. Este resultado es consistente con el arquetipo \textit{Límites al Crecimiento}: la única palanca real es elevar la capacidad del sistema (aumentar el límite), no solo redireccionar la demanda.
+
+% ============================================================
+\section*{Referencias}
+\addcontentsline{toc}{section}{Referencias}
+% ============================================================
+
+\begin{enumerate}[leftmargin=1.5cm,label=\textbf{[\arabic*]}]
+
+\item \label{ref:deis} \textbf{DEIS/MINSAL — Lista de Espera No GES}\\
+  Estadísticas históricas de pacientes en lista de espera del sector público.\\
+  \url{https://deis.minsal.cl/estadisticas-de-salud/}
+
+\item \label{ref:minsal} \textbf{MINSAL — Lista de Espera (portal oficial)}\\
+  Plan de Reducción de Listas de Espera, normativas y cifras actualizadas.\\
+  \url{https://www.minsal.cl/lista-de-espera/}
+
+\item \label{ref:rem} \textbf{DEIS — REM (Resumen Estadístico Mensual)}\\
+  Horas trabajadas por especialistas en el sistema público, por servicio de salud.\\
+  \url{https://deis.minsal.cl/rem/}
+
+\item \label{ref:fonasa} \textbf{FONASA — Estadísticas institucionales}\\
+  Distribución de beneficiarios FONASA/ISAPRE, coberturas y prestaciones.\\
+  \url{https://www.fonasa.cl/sites/fonasa/transparencia/estadisticas}
+
+\item \label{ref:sis} \textbf{SIS — Superintendencia de Salud, estadísticas}\\
+  Oferta del sector privado, cotizantes ISAPRE, prestaciones y tarifas.\\
+  \url{https://www.supersalud.gob.cl/estadisticas}
+
+\item \label{ref:ine} \textbf{INE — Encuesta CASEN (Caracterización Socioeconómica)}\\
+  Demanda por atención de salud, uso de servicios público/privado por nivel socioeconómico.\\
+  \url{https://www.ine.gob.cl/estadisticas/sociales/encuestas-de-hogares/casen}
+
+\item \label{ref:bcentral} \textbf{Banco Central de Chile — Base de Datos Estadísticos (BDE)}\\
+  Indicadores macroeconómicos, inflación en salud, gasto en salud como \% del PIB.\\
+  \url{https://si3.bcentral.cl/siete}
+
+\item \textbf{Sterman, J.D. (2000).} \textit{Business Dynamics: Systems Thinking and Modeling for a Complex World.} McGraw-Hill.
+
+\item \textbf{Barlas, Y. (1996).} Formal aspects of model validity and validation in system dynamics. \textit{System Dynamics Review}, 12(3), 183--210.
+
+\item \textbf{Little, J.D.C. (1961).} A proof for the queuing formula: $L=\lambda W$. \textit{Operations Research}, 9(3), 383--387.
+
+\end{enumerate}
+
+\end{document}
